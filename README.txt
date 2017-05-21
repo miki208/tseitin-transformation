@@ -1,1 +1,1 @@
-Tseitin transformation with propositional logic lexer and parser included.
+Implementation of Tseitin transformation in C++, including propositional logic lexer and parser.
