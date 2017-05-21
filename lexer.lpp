@@ -1,0 +1,23 @@
+%option noyywrap
+
+%{
+#include "prop_logic.h"
+#include "parser.hpp"
+%}
+
+%%
+
+true							return TRUE;
+false							return FALSE;
+[A-Za-z][A-Za-z_0-9]*			yylval.str_attr = new std::string(yytext); return VAR;
+\(								return *yytext;
+\)								return *yytext;
+&								return AND;
+\|								return OR;
+=\>								return IMP;
+\<=\>							return IFF;
+¬								return NOT;
+;								return *yytext;
+[ \t\n]
+
+%%
