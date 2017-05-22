@@ -57,6 +57,11 @@ bool BaseFormula::isSat(Valuation &v) const
 	return false;
 }
 
+Formula BaseFormula::tseitinTransformation()
+{
+	return _tseitin(simplify()->pushNegation());
+}
+
 /* AtomicFormula */
 Formula AtomicFormula::simplify() {
 	return shared_from_this();

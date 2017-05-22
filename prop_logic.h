@@ -41,6 +41,10 @@ class BaseFormula : public std::enable_shared_from_this<BaseFormula>
 		bool isTautology() const;
 		bool isSat(Valuation&) const;
 		virtual bool eval(const Valuation&) const = 0;
+		Formula tseitinTransformation();
+
+	private:
+		Formula _tseitin(Formula&) const = 0;
 };
 
 class AtomicFormula : public BaseFormula
