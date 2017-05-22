@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <set>
+#include <map>
 
 class BaseFormula;
 
@@ -13,6 +14,18 @@ typedef std::set<std::string> AtomSet;
 enum Type { T_ATOM, T_TRUE, T_FALSE, T_IFF, T_IMP, T_NOT, T_AND, T_OR };
 
 /* Deklaracije klasa */
+
+class Valuation
+{
+	public:
+		Valuation(const AtomSet&);
+		bool getValue(const std::string&) const;
+		void setValue(std::string&, bool);
+		bool next();
+		void print(std::ostream&) const;
+	private:
+		std::map<std::string, bool> _vars;
+};
 
 class BaseFormula : public std::enable_shared_from_this<BaseFormula>
 {
@@ -23,6 +36,11 @@ class BaseFormula : public std::enable_shared_from_this<BaseFormula>
 		virtual Formula pushNegation() = 0;
 		virtual bool equals(const Formula&) const = 0;
 		virtual void print(std::ostream&) const = 0;
+		bool isEquivalent(const Formula&) const;
+		void printTruthTable() const;
+		bool isTautology() const;
+		bool isSat(Valuation&) const;
+		virtual bool eval(const Valuation&) const = 0;
 };
 
 class AtomicFormula : public BaseFormula
@@ -44,6 +62,7 @@ class True : public LogicConstant
 	public:
 		Type getType() const;
 		void print(std::ostream&) const;
+		bool eval(const Valuation&) const;
 };
 
 class False : public LogicConstant
@@ -51,6 +70,7 @@ class False : public LogicConstant
 	public:
 		Type getType() const;
 		void print(std::ostream&) const;
+		bool eval(const Valuation&) const;
 };
 
 class Atom : public AtomicFormula
@@ -61,6 +81,7 @@ class Atom : public AtomicFormula
 		void getAtoms(AtomSet &as) const;
 		bool equals(const Formula&) const;
 		void print(std::ostream&) const;
+		bool eval(const Valuation&) const;
 
 	private:
 		std::string _id;
@@ -86,6 +107,7 @@ class Not : public UnaryConnective
 		Formula simplify();
 		Formula pushNegation();
 		void print(std::ostream&) const;
+		bool eval(const Valuation&) const;
 };
 
 class BinaryConnective : public BaseFormula
@@ -109,6 +131,7 @@ class And : public BinaryConnective
 		Formula simplify();
 		Formula pushNegation();
 		void print(std::ostream&) const;
+		bool eval(const Valuation&) const;
 };
 
 class Or : public BinaryConnective
@@ -119,6 +142,7 @@ class Or : public BinaryConnective
 		Formula simplify();
 		Formula pushNegation();
 		void print(std::ostream&) const;
+		bool eval(const Valuation&) const;
 };
 
 class Imp : public BinaryConnective
@@ -129,6 +153,7 @@ class Imp : public BinaryConnective
 		Formula simplify();
 		Formula pushNegation();
 		void print(std::ostream&) const;
+		bool eval(const Valuation&) const;
 };
 
 class Iff : public BinaryConnective
@@ -139,9 +164,12 @@ class Iff : public BinaryConnective
 		Formula simplify();
 		Formula pushNegation();
 		void print(std::ostream&) const;
+		bool eval(const Valuation&) const;
 };
 
 std::ostream& operator<<(std::ostream&, const Formula&);
+
+std::ostream& operator<<(std::ostream&, const Valuation&);
 
 std::string getUniqueId(const AtomSet&);
 

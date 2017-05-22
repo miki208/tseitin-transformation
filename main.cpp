@@ -8,10 +8,16 @@ extern Formula parsed_formula;
 
 int main()
 {
-	yyparse();
-
-	if(parsed_formula.get() != 0)
-		cout << parsed_formula << endl;
+	//yyparse();
+	//Formula a = parsed_formula;
+	
+	//if(a.get() != 0)	
+	//	cout << a << endl;
+	
+	Valuation v(AtomSet { "a", "b1", "c", "d" });
+	do {
+		cout << v << endl;
+	} while(v.next());
 
 	return 0;
 }

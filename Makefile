@@ -1,6 +1,6 @@
 PROG = main
 CC = g++
-CCFLAGS = -std=c++11
+CCFLAGS = -std=c++11 -g
 LEXER = flex
 PARSER = bison
 

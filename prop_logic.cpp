@@ -2,6 +2,61 @@
 
 using namespace std;
 
+/* BaseFormula */
+bool BaseFormula::isEquivalent(const Formula &f) const
+{
+	AtomSet as;
+	getAtoms(as);
+	f->getAtoms(as);
+	Valuation v(as);
+
+	do {
+		if(eval(v) != f->eval(v))
+			return false;
+	} while(v.next());
+
+	return true;
+}
+
+void BaseFormula::printTruthTable() const
+{
+	AtomSet as;
+	getAtoms(as);
+	Valuation v(as);
+
+	do {
+		cout << v << " | " << eval(v) << endl;
+	} while(v.next());
+}
+
+bool BaseFormula::isTautology() const
+{
+	AtomSet as;
+	getAtoms(as);
+	Valuation v(as);
+
+	do {
+		if(eval(v) == false)
+			return false;
+	} while(v.next());
+
+	return true;
+}
+
+bool BaseFormula::isSat(Valuation &v) const
+{
+	AtomSet as;
+	getAtoms(as);
+	v = Valuation(as);
+
+	do {
+		if(eval(v) == true)
+			return true;
+	} while(v.next());
+
+	return false;
+}
+
 /* AtomicFormula */
 Formula AtomicFormula::simplify() {
 	return shared_from_this();
@@ -29,6 +84,11 @@ void True::print(ostream &ostr) const
 	ostr << "TRUE";
 }
 
+bool True::eval(const Valuation &v) const
+{
+	return true;
+}
+
 /* False */
 Type False::getType() const {
 	return T_FALSE;
@@ -37,6 +97,11 @@ Type False::getType() const {
 void False::print(ostream &ostr) const
 {
 	ostr << "FALSE";
+}
+
+bool False::eval(const Valuation &v) const
+{
+	return false;
 }
 
 /* Atom */
@@ -58,6 +123,11 @@ bool Atom::equals(const Formula &f) const {
 void Atom::print(ostream &ostr) const
 {
 	ostr << _id; 
+}
+
+bool Atom::eval(const Valuation &v) const
+{
+	return v.getValue(_id);
 }
 
 /* UnaryConnective */
@@ -121,6 +191,11 @@ void Not::print(ostream &ostr) const
 	ostr << "¬" << _op;
 }
 
+bool Not::eval(const Valuation &v) const
+{
+	return !_op->eval(v);
+}
+
 /* BinaryConnective */
 BinaryConnective::BinaryConnective(const Formula &op1, const Formula &op2) : _op1(op1), _op2(op2) {
 }
@@ -170,6 +245,11 @@ void And::print(ostream &ostr) const
 	ostr << "(" << _op1 << " /\\ " << _op2 << ")";
 }
 
+bool And::eval(const Valuation &v) const
+{
+	return _op1->eval(v) && _op2->eval(v);
+}
+
 /* Or */
 Type Or::getType() const {
 	return T_OR;
@@ -198,6 +278,11 @@ void Or::print(ostream &ostr) const
 	ostr << "(" << _op1 << " \\/ " << _op2 << ")";
 }
 
+bool Or::eval(const Valuation &v) const
+{
+	return _op1->eval(v) || _op2->eval(v);
+}
+
 /* Imp */
 Type Imp::getType() const {
 	return T_IMP;
@@ -224,6 +309,11 @@ Formula Imp::pushNegation() {
 void Imp::print(ostream &ostr) const
 {
 	ostr << "(" << _op1 << " => " << _op2 << ")";
+}
+
+bool Imp::eval(const Valuation &v) const
+{
+	return !_op1->eval(v) || _op2->eval(v);
 }
 
 /* Iff */
@@ -258,11 +348,56 @@ void Iff::print(ostream &ostr) const
 	ostr << "(" << _op1 << " <=> " << _op2 << ")";
 }
 
+bool Iff::eval(const Valuation &v) const
+{
+	return _op1->eval(v) == _op2->eval(v);
+}
+
+/* Valuation */
+Valuation::Valuation(const AtomSet &as)
+{
+	for(const string &i : as)
+		_vars.insert(make_pair(i, false));
+}
+
+bool Valuation::getValue(const string &str) const
+{
+	return _vars.find(str)->second;
+}
+
+void Valuation::setValue(string &str, bool val)
+{
+	_vars[str] = val;
+}
+
+bool Valuation::next()
+{
+	for(auto i = _vars.rbegin(), k = _vars.rend(); i != k; i++) {
+		i->second = !i->second;
+		if(i->second != false)
+			return true;
+	}
+	return false;
+}
+
+void Valuation::print(ostream &ostr) const
+{
+	for(auto b = _vars.cbegin(), e = _vars.cend(); b != e; b++) {
+		ostr << b->second << " ";
+	}
+}
+
 /* Pomocne funkcije */
 
-std::ostream& operator<<(ostream &ostr, const Formula &f)
+ostream& operator<<(ostream &ostr, const Formula &f)
 {
 	f->print(ostr);
+	return ostr;
+}
+
+ostream& operator<<(ostream &ostr, const Valuation &v)
+{
+	v.print(ostr);
 	return ostr;
 }
 
