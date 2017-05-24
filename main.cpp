@@ -8,16 +8,16 @@ extern Formula parsed_formula;
 
 int main()
 {
-	//yyparse();
-	//Formula a = parsed_formula;
+	yyparse();
+	Formula a = parsed_formula;
 	
-	//if(a.get() != 0)	
-	//	cout << a << endl;
-	
-	Valuation v(AtomSet { "a", "b1", "c", "d" });
-	do {
-		cout << v << endl;
-	} while(v.next());
+	if(a.get() != 0) {	
+		cout << "Formula before transformation: " << a << endl;
+
+		Formula b = a->tseitinTransformation();
+
+		cout << "Formula after transformation: " << b << endl;
+	}
 
 	return 0;
 }

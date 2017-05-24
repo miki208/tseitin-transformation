@@ -3,6 +3,14 @@
 using namespace std;
 
 /* BaseFormula */
+
+//returns true if type of first arg is T_NOT, T_ATOM, T_TRUE or T_FALSE
+bool BaseFormula::isNATF(const Formula &f) const {
+	Type t = f->getType();
+
+	return t == T_TRUE || t == T_FALSE || t == T_ATOM || t == T_NOT;
+}
+
 bool BaseFormula::isEquivalent(const Formula &f) const
 {
 	AtomSet as;
@@ -59,7 +67,54 @@ bool BaseFormula::isSat(Valuation &v) const
 
 Formula BaseFormula::tseitinTransformation()
 {
-	return _tseitin(simplify()->pushNegation());
+	AtomSet as;
+	Formula simpl = simplify()->pushNegation();
+	simpl->getAtoms(as);
+	Formula tmp = nullptr;
+	Formula res = _tseitin(simpl, as, tmp);
+
+	if(tmp.get() == nullptr)
+		return res;
+	else
+		return make_shared<And>(res, tmp);
+}
+
+Formula BaseFormula::_tseitin(const Formula &f, AtomSet &as, Formula &tmp) const {
+	if(isNATF(f))
+		return f;
+
+	//apply transformation on subformulas
+	Formula ts1 = _tseitin(((BinaryConnective*) f.get())->getOp1(), as, tmp);
+	Formula ts2 = _tseitin(((BinaryConnective*) f.get())->getOp2(), as, tmp);
+
+	//make new atom
+	string id = getUniqueId(as);
+	Formula atom = make_shared<Atom>(id);
+	as.insert(id);
+
+	Formula conn;
+
+	switch(f->getType()) {
+		case T_AND:
+			conn = make_shared<And>(ts1, ts2);
+			break;
+		case T_OR:
+			conn = make_shared<Or>(ts1, ts2);
+			break;
+		case T_IMP:
+			conn = make_shared<Imp>(ts1, ts2);
+			break;
+		case T_IFF:
+			conn = make_shared<Iff>(ts1, ts2);
+			break;
+	}
+
+	if(tmp.get() == nullptr)
+		tmp = make_shared<Iff>(atom, conn);
+	else
+		tmp = make_shared<And>(tmp, make_shared<Iff>(atom, conn));
+
+	return atom;
 }
 
 /* AtomicFormula */
@@ -135,6 +190,10 @@ bool Atom::eval(const Valuation &v) const
 	return v.getValue(_id);
 }
 
+string Atom::getId() const {
+	return _id;
+}
+
 /* UnaryConnective */
 UnaryConnective::UnaryConnective(const Formula &op) : _op(op) {
 }
@@ -191,13 +250,14 @@ Formula Not::pushNegation() {
 	}
 }
 
-void Not::print(ostream &ostr) const
-{
-	ostr << "¬" << _op;
+void Not::print(ostream &ostr) const {
+	if(!isNATF(_op))
+		ostr << "¬(" << _op << ")";
+	else
+		ostr << "¬" << _op;
 }
 
-bool Not::eval(const Valuation &v) const
-{
+bool Not::eval(const Valuation &v) const {
 	return !_op->eval(v);
 }
 
@@ -222,6 +282,33 @@ bool BinaryConnective::equals(const Formula &f) const {
 	return getType() == f->getType() && _op1->equals(((BinaryConnective*) f.get())->_op1) && _op2->equals(((BinaryConnective*) f.get())->_op2);
 }
 
+void BinaryConnective::print(ostream &ostr) const {
+	if(!(_op1->getType() == getType() || isNATF(_op1)))
+		ostr << "(" << _op1 << ")";
+	else
+		ostr << _op1;
+
+	switch(getType()) {
+		case T_AND:
+			ostr << " /\\ ";
+			break;
+		case T_OR:
+			ostr << " \\/ ";
+			break;
+		case T_IMP:
+			ostr << " => ";
+			break;
+		case T_IFF:
+			ostr << " <=> ";
+			break;
+	}
+
+	if(!(_op2->getType() == getType() || isNATF(_op2)))
+		ostr << "(" << _op2 << ")";
+	else
+		ostr << _op2;
+}
+
 /* And */
 Type And::getType() const {
 	return T_AND;
@@ -243,11 +330,6 @@ Formula And::simplify() {
 
 Formula And::pushNegation() {
 	return make_shared<And>(_op1->pushNegation(), _op2->pushNegation());
-}
-
-void And::print(ostream &ostr) const
-{
-	ostr << "(" << _op1 << " /\\ " << _op2 << ")";
 }
 
 bool And::eval(const Valuation &v) const
@@ -278,11 +360,6 @@ Formula Or::pushNegation() {
 	return make_shared<Or>(_op1->pushNegation(), _op2->pushNegation());
 }
 
-void Or::print(ostream &ostr) const
-{
-	ostr << "(" << _op1 << " \\/ " << _op2 << ")";
-}
-
 bool Or::eval(const Valuation &v) const
 {
 	return _op1->eval(v) || _op2->eval(v);
@@ -309,11 +386,6 @@ Formula Imp::simplify() {
 
 Formula Imp::pushNegation() {
 	return make_shared<Or>(make_shared<Not>(_op1)->pushNegation(), _op2->pushNegation());
-}
-
-void Imp::print(ostream &ostr) const
-{
-	ostr << "(" << _op1 << " => " << _op2 << ")";
 }
 
 bool Imp::eval(const Valuation &v) const
@@ -346,11 +418,6 @@ Formula Iff::simplify() {
 
 Formula Iff::pushNegation() {
 	return make_shared<Iff>(_op1->pushNegation(), _op2->pushNegation());
-}
-
-void Iff::print(ostream &ostr) const
-{
-	ostr << "(" << _op1 << " <=> " << _op2 << ")";
 }
 
 bool Iff::eval(const Valuation &v) const

@@ -43,8 +43,11 @@ class BaseFormula : public std::enable_shared_from_this<BaseFormula>
 		virtual bool eval(const Valuation&) const = 0;
 		Formula tseitinTransformation();
 
+	protected:
+		bool isNATF(const Formula&) const;
+
 	private:
-		Formula _tseitin(Formula&) const = 0;
+		Formula _tseitin(const Formula&, AtomSet&, Formula&) const;
 };
 
 class AtomicFormula : public BaseFormula
@@ -86,6 +89,7 @@ class Atom : public AtomicFormula
 		bool equals(const Formula&) const;
 		void print(std::ostream&) const;
 		bool eval(const Valuation&) const;
+		std::string getId() const;
 
 	private:
 		std::string _id;
@@ -122,6 +126,7 @@ class BinaryConnective : public BaseFormula
 		const Formula& getOp2() const;
 		void getAtoms(AtomSet &as) const;
 		bool equals(const Formula&) const;
+		void print(std::ostream&) const;
 
 	protected:
 		Formula _op1, _op2;
@@ -134,7 +139,6 @@ class And : public BinaryConnective
 		Type getType() const ;
 		Formula simplify();
 		Formula pushNegation();
-		void print(std::ostream&) const;
 		bool eval(const Valuation&) const;
 };
 
@@ -145,7 +149,6 @@ class Or : public BinaryConnective
 		Type getType() const;
 		Formula simplify();
 		Formula pushNegation();
-		void print(std::ostream&) const;
 		bool eval(const Valuation&) const;
 };
 
@@ -156,7 +159,6 @@ class Imp : public BinaryConnective
 		Type getType() const;
 		Formula simplify();
 		Formula pushNegation();
-		void print(std::ostream&) const;
 		bool eval(const Valuation&) const;
 };
 
@@ -167,7 +169,6 @@ class Iff : public BinaryConnective
 		Type getType() const;
 		Formula simplify();
 		Formula pushNegation();
-		void print(std::ostream&) const;
 		bool eval(const Valuation&) const;
 };
 
