@@ -1,22 +1,25 @@
 %option noyywrap
+%option noinput
+%option nounput
+%option yylineno
 
 %{
-#include "prop_logic.h"
-#include "parser.hpp"
+	#include "prop_logic.h"
+	#include "parser.hpp"
 %}
 
 %%
 
-true							return TRUE;
-false							return FALSE;
+TRUE							return TRUE;
+F								return FALSE;
 [A-Za-z][A-Za-z_0-9]*			yylval.str_attr = new std::string(yytext); return VAR;
 \(								return *yytext;
 \)								return *yytext;
-&								return AND;
-\|								return OR;
+\/\\							return AND;
+\\\/							return OR;
 =\>								return IMP;
 \<=\>							return IFF;
-¬								return NOT;
+\~								return NOT;
 ;								return *yytext;
 [ \t\n]
 

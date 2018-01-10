@@ -1,10 +1,10 @@
-PROG = main
+PROGRAM = tseitin
 CC = g++
-CCFLAGS = -std=c++11 -g
+CCFLAGS = -std=c++11
 LEXER = flex
 PARSER = bison
 
-$(PROG): main.o prop_logic.o parser.o lexer.o
+$(PROGRAM): main.o prop_logic.o parser.o lexer.o
 	$(CC) $(CCFLAGS) -o $@ $^
 
 main.o: main.cpp prop_logic.h
@@ -26,11 +26,4 @@ lexer.cpp: lexer.lpp
 	$(LEXER) -o $@ $<
 
 clean:
-	rm -f *.o
-	rm -f *~
-	rm -f parser.cpp
-	rm -f lexer.cpp
-	rm -f parser.hpp
-	rm -f $(PROG)
-	rm -f *.swp
-
+	rm -f *.o *~ parser.cpp lexer.cpp parser.hpp $(PROGRAM) *.swp

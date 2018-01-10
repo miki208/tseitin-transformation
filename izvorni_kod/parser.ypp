@@ -1,0 +1,84 @@
+%{
+	#include <stdio.h>
+
+	int yylex();
+
+	#define yyerror printf
+	#include "prop_logic.h"
+
+	Formula parsed_formula;
+%}
+
+%token<str_attr> VAR;
+%token TRUE FALSE;
+%left IFF;
+%left IMP;
+%left OR;
+%left AND;
+%left NOT;
+
+%type<formula_attr> formula
+
+%union
+{
+	std::string *str_attr;
+	BaseFormula *formula_attr;
+}
+
+%start input
+
+%%
+
+//-----------------------------------------------------------------------------
+// input
+//-----------------------------------------------------------------------------
+input	:	formula ';'
+			{
+				parsed_formula = Formula($1);
+				return 0;
+			}
+		;
+
+//-----------------------------------------------------------------------------
+// formula
+//-----------------------------------------------------------------------------
+formula 	:	formula IFF formula
+				{
+					$$ = new Iff(Formula($1), Formula($3));
+				}
+			| formula IMP formula
+				{
+					$$ = new Imp(Formula($1), Formula($3));
+				}
+			| formula OR formula
+				{
+					$$ = new Or(Formula($1), Formula($3));
+				}
+			| formula AND formula
+				{
+					$$ = new And(Formula($1), Formula($3));
+				}
+			| NOT formula
+				{
+					$$ = new Not(Formula($2));
+				}
+			| '(' formula ')'
+				{
+					$$ = $2;
+				}
+			| VAR
+				{
+					$$ = new Atom(*$1);
+					delete $1;
+				}
+			| TRUE
+				{
+					$$ = new True();
+				}
+			| FALSE
+				{
+					$$ = new False();
+				}
+			;
+
+%%
