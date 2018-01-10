@@ -2,6 +2,6 @@
 parser.hpp
 lexer.cpp
 parser.cpp
-main
 *~
 *.o
+izvorni_kod/tseitin
